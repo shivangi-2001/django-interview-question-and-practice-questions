@@ -1,16 +1,6 @@
-# Django Interview Questions & Practice Guide
+# Django Detail Revision Guide 
 
-This guids contains **50 frequently asked Django inetrview questions + Practice coding assessment problems** (this question asked in Deloitte, JPMorgan, McKinsey, and others.)
-
-These assessment are based on **my personal interview** this companies which provide practice question from  HackerRank, CodeChef, etc.
-
-Use this to:
-✅ Revise Django concepts quickly
-✅ Practice real-world coding challenges in under 1 hour
-✅ Boost your chances of cracking Django interviews
-
-
-## Quick Recap
+## Django Intro
 
 **Django** is high-level python web framework that enable rapid development and clean, pragmatic design.
 
@@ -242,3 +232,50 @@ This helps you **decouple code →** the sender (event) doesn’t need to know w
     `request_started`, `request_finished`.
 3. **Authentication Signals**
     `user_logged_in`, `user_logged_out`, `user_login_failed`.
+
+Example:
+`signal.py`
+
+```python
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.contrib.auth.models import User
+from .models import Profile
+
+@receiver(post_save, sender=User)
+def create_profile(sender, instance, created, **kwargs):
+    if created:  # when new user is created
+        Profile.objects.create(user=instance)
+```
+
+`apps.py`:Make sure signals load when app starts.
+```python
+from django.apps import AppConfig
+
+class AccountsConfig(AppConfig):
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'accounts'
+
+    def ready(self):
+        import accounts.signals
+```
+
+
+
+
+## Authorization
+
+SessionAuth (Session-Based Authentication):
+Mechanism: After a user successfully logs in, the server creates a session and stores a unique session ID, typically in a server-side database or cache. This session ID is then sent to the client (usually a browser) in a cookie.
+Client Interaction: The browser automatically sends this session cookie with every subsequent request to the server, allowing the server to identify the user based on the session ID.
+State: Stateful. The server maintains a record of active sessions and their associated users.
+Primary Use Case: Primarily designed for traditional web applications where a browser is the client, as cookies are handled automatically by the browser.
+Security Considerations: Vulnerable to Cross-Site Request Forgery (CSRF) attacks if not properly protected (DRF includes built-in CSRF protection for session authentication).
+TokenAuth (Token-Based Authentication):
+Mechanism: After successful login, the server generates a unique token (e.g., a JSON Web Token or a simple opaque token) and sends it to the client. The server may store a record of this token (for opaque tokens) or the token itself contains all necessary information (for JWTs).
+Client Interaction: The client (e.g., a mobile app, a single-page application, or another API client) is responsible for storing this token and explicitly including it in the Authorization header of every subsequent request.
+State: Can be stateless (with JWTs) or stateful (with opaque tokens where the server stores token information). Stateless tokens offer better scalability for distributed systems.
+Primary Use Case: Well-suited for non-browser clients, such as mobile applications, desktop applications, or other API consumers, where explicit token management is feasible.
+Security Considerations: Requires secure handling of the token on the client-side to prevent theft. Can be more complex to implement token revocation and refresh mechanisms.
+
+## Security
